@@ -1,5 +1,6 @@
 package com.faire.ai.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -14,6 +15,7 @@ public class Bulletin {
 
     String country;
 
+    @JsonFormat(pattern = "dd/MM/yyyy HH:mm:ss")
     LocalDateTime currentTime;
 
     @JsonIgnore

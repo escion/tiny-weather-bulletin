@@ -39,7 +39,7 @@ public class BulletinUtils {
         workingHoursInterval = Pair.of(LocalTime.parse(hours.get(0)), LocalTime.parse(hours.get(1)));
     }
 
-    public Bulletin mapBulletin(OpenApiBulletin openApiBulletin){
+    public Bulletin mapOpenApiToBulletin(OpenApiBulletin openApiBulletin){
         Bulletin bulletin = new Bulletin();
         bulletin.setCity(openApiBulletin.getCity().getName());
         bulletin.setCountry(openApiBulletin.getCity().getCountry());
@@ -51,47 +51,53 @@ public class BulletinUtils {
         return bulletin;
     }
 
-    public void filterBulletinOnlyForNextThreeDays(Bulletin bulletin){
+    public void filterBulletinByCollectingForecastsForNextThreeDays(Bulletin bulletin){
         final Pair<LocalDateTime, LocalDateTime> interval = getNextThreeDaysInterval(bulletin.getCurrentTime());
         bulletin.setForecast(bulletin.getForecast()
                 .stream()
                 .filter(forecast -> (forecast.getTime().compareTo(interval.getLeft()) >= 0 && forecast.getTime().compareTo(interval.getRight()) <= 0))
                 .collect(Collectors.toList()));
-        Forecast workingHours = new Forecast();
-        workingHours.setMin(getMinimumTemperature(bulletin, true).getMin());
-        workingHours.setMax(getMaximumTemperature(bulletin, true).getMax());
-        workingHours.setHumidity(getHumidity(bulletin, true));
-        bulletin.setWorkingHours(workingHours);
-        Forecast notWorkingHours = new Forecast();
-        notWorkingHours.setMin(getMinimumTemperature(bulletin, false).getMin());
-        notWorkingHours.setMax(getMaximumTemperature(bulletin, false).getMax());
-        notWorkingHours.setHumidity(getHumidity(bulletin, false));
-        bulletin.setNotWorkingHours(notWorkingHours);
+        bulletin.setWorkingHours(collectForecastDuringWorkingHours(bulletin.getForecast()));
+        bulletin.setNotWorkingHours(collectForecastOutsideWorkingHours(bulletin.getForecast()));
     }
 
-    public Forecast getMinimumTemperature(Bulletin bulletin, boolean workingHours){
-        return bulletin.getForecast()
-                .stream()
+    public Forecast collectForecastDuringWorkingHours(List<Forecast> forecasts){
+        return collectForecast(forecasts, true);
+    }
+
+    public Forecast collectForecastOutsideWorkingHours(List<Forecast> forecasts){
+        return collectForecast(forecasts, false);
+    }
+
+    private Forecast collectForecast(List<Forecast> forecasts, boolean workingHours){
+        Forecast forecast = new Forecast();
+        forecast.setMin(getMinimumTemperature(forecasts, workingHours).getMin());
+        forecast.setMax(getMaximumTemperature(forecasts, workingHours).getMax());
+        forecast.setHumidity(getAvgHumidity(forecasts, workingHours));
+        return forecast;
+    }
+
+    public Forecast getMinimumTemperature(List<Forecast> forecasts, boolean workingHours){
+        return forecasts.stream()
                 .filter(forecast -> workingHours ? isInWorkingHours(forecast) : isOutsideWorkingHours(forecast))
                 .min(Comparator.comparing(Forecast::getMin))
                 .get();
     }
 
-    public Forecast getMaximumTemperature(Bulletin bulletin, boolean workingHours){
-        return bulletin.getForecast()
-                .stream()
+    public Forecast getMaximumTemperature(List<Forecast> forecasts, boolean workingHours){
+        return forecasts.stream()
                 .filter(forecast -> workingHours ? isInWorkingHours(forecast) : isOutsideWorkingHours(forecast))
                 .max(Comparator.comparing(Forecast::getMax))
                 .get();
     }
 
-    public Double getHumidity(Bulletin bulletin, boolean workingHours){
-        return bulletin.getForecast()
-                .stream()
+    public Double getAvgHumidity(List<Forecast> forecasts, boolean workingHours){
+        Double humidity = forecasts.stream()
                 .filter(forecast -> workingHours ? isInWorkingHours(forecast) : isOutsideWorkingHours(forecast))
                 .mapToDouble(Forecast::getHumidity)
                 .average()
                 .getAsDouble();
+        return Math.floor(humidity * 100)/100;
     }
 
     private boolean isInWorkingHours(Forecast forecast) {

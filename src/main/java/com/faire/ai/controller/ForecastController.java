@@ -5,8 +5,6 @@ import com.faire.ai.model.Bulletin;
 import com.faire.ai.model.Error;
 import com.faire.ai.service.WeatherService;
 import com.faire.ai.utils.BulletinUtils;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +30,7 @@ public class ForecastController {
             @PathVariable(required = false) Optional<String> country){
         try{
             Bulletin bulletin = weatherService.getForecast(city, country);
-            utils.filterBulletinOnlyForNextThreeDays(bulletin);
+            utils.filterBulletinByCollectingForecastsForNextThreeDays(bulletin);
             return ResponseEntity.ok(bulletin);
         }
         catch (ForecastNotAvailableException e) {

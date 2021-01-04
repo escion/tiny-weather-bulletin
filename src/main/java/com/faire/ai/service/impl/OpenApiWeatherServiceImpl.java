@@ -39,7 +39,7 @@ public class OpenApiWeatherServiceImpl implements WeatherService {
             }
             ResponseEntity<OpenApiBulletin> response = restTemplate.getForEntity(baseUrl, OpenApiBulletin.class, city);
             if(response.getStatusCode().is2xxSuccessful()){
-                return utils.mapBulletin(response.getBody());
+                return utils.mapOpenApiToBulletin(response.getBody());
             }
             else{
                 throw new ForecastNotAvailableException(response.getStatusCodeValue(), response.getBody().getMessage());
