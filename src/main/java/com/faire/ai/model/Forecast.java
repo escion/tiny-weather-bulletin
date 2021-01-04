@@ -9,7 +9,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@ApiModel("Representing forecast with specific information")
+@ApiModel(description = "Representing forecast with specific information")
 public class Forecast {
 
     @JsonIgnore
