@@ -5,16 +5,21 @@ import com.faire.ai.model.Bulletin;
 import com.faire.ai.model.Error;
 import com.faire.ai.service.WeatherService;
 import com.faire.ai.utils.BulletinUtils;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Optional;
 
 @RestController
 @RequestMapping("/forecast")
+@Api("Set of endpoints for retrieving next three days forecast and updating working hours")
 public class ForecastController {
 
     @Autowired
@@ -25,9 +30,10 @@ public class ForecastController {
     WeatherService weatherService;
 
     @GetMapping(value = {"/next-three-days/{city}/{country}", "/next-three-days/{city}"})
+    @ApiOperation("Returns next three days forecast (considering city local time): min temperature, max temperature and average humidity during and outside working hours")
     public ResponseEntity getThreeDaysForecast(
-            @PathVariable String city,
-            @PathVariable(required = false) Optional<String> country){
+            @ApiParam("City name or state, example Milan or Italy. Cannot be blank") @PathVariable String city,
+            @ApiParam("Country code, example IT for Italy") @PathVariable(required = false) Optional<String> country){
         try{
             Bulletin bulletin = weatherService.getForecast(city, country);
             utils.filterBulletinByCollectingForecastsForNextThreeDays(bulletin);
@@ -40,7 +46,9 @@ public class ForecastController {
     }
 
     @PostMapping(value = "/next-three-days")
-    public void modifyWorkingHours(@RequestBody List<String> hours){
+    @ApiOperation("Updates working hours (default 09:00 - 18:00, considered at city local time)")
+    public void modifyWorkingHours(
+            @ApiParam("Array containing range interval of working hours with HH:mm pattern. Cannot be blank") @Size(max = 2) @RequestBody List<String> hours){
         utils.setWorkingHoursInterval(hours);
     }
 }
