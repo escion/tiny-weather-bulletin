@@ -11,8 +11,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,8 +26,23 @@ public class ForecastController {
     @Qualifier("openApiWeather")
     WeatherService weatherService;
 
-    @GetMapping(value = {"/next-three-days/{city}/{country}", "/next-three-days/{city}"})
-    @ApiOperation("Returns next three days forecast (considering city local time): min temperature, max temperature and average humidity during and outside working hours")
+    @GetMapping(value = {"/next-three-days/{city}"})
+    @ApiOperation("Returns next three days forecast by city name or state(considering city local time): min temperature, max temperature and average humidity during and outside working hours")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, response = Bulletin.class, message = "OK"),
+            @ApiResponse(code = 401, response = Error.class, message = "Wrong appid"),
+            @ApiResponse(code = 404, response = Error.class, message = "City not found"),
+            @ApiResponse(code = 429, response = Error.class, message = "Too many requests"),
+            @ApiResponse(code = 500, response = Error.class, message = "Could not get forecast")
+    }
+    )
+    public ResponseEntity getThreeDaysForecast(
+            @ApiParam(value = "City name or state, example Milan or Italy. Cannot be blank") @PathVariable String city){
+        return getForecast(city, null);
+    }
+
+    @GetMapping(value = {"/next-three-days/{city}/{country}"})
+    @ApiOperation("Returns next three days forecast by city name or state and by country code (considering city local time): min temperature, max temperature and average humidity during and outside working hours")
     @ApiResponses(value = {
             @ApiResponse(code = 200, response = Bulletin.class, message = "OK"),
             @ApiResponse(code = 401, response = Error.class, message = "Wrong appid"),
@@ -38,9 +51,20 @@ public class ForecastController {
             @ApiResponse(code = 500, response = Error.class, message = "Could not get forecast")
         }
     )
-    public ResponseEntity getThreeDaysForecast(
-            @ApiParam("City name or state, example Milan or Italy. Cannot be blank") @PathVariable(required = true) String city,
-            @ApiParam("Country code, example IT for Italy") @PathVariable(required = false) Optional<String> country){
+    public ResponseEntity getThreeDaysForecastWithCountry(
+            @ApiParam(value = "City name or state, example Milan or Italy. Cannot be blank") @PathVariable String city,
+            @ApiParam(value = "Country code, example IT for Italy") @PathVariable String country){
+        return getForecast(city, country);
+    }
+
+    @PostMapping(value = "/next-three-days")
+    @ApiOperation("Updates working hours (default 09:00 - 18:00, considered at city local time)")
+    public void modifyWorkingHours(
+            @ApiParam("Array containing range interval of working hours with HH:mm pattern. Cannot be blank") @RequestBody List<String> hours){
+        utils.setWorkingHoursInterval(hours);
+    }
+
+    private ResponseEntity getForecast(String city, String country){
         try{
             Bulletin bulletin = weatherService.getForecast(city, country);
             utils.filterBulletinByCollectingForecastsForNextThreeDays(bulletin);
@@ -50,12 +74,5 @@ public class ForecastController {
             Error error = new Error(e.getDescription());
             return ResponseEntity.status(e.getCode()).body(error);
         }
-    }
-
-    @PostMapping(value = "/next-three-days")
-    @ApiOperation("Updates working hours (default 09:00 - 18:00, considered at city local time)")
-    public void modifyWorkingHours(
-            @ApiParam("Array containing range interval of working hours with HH:mm pattern. Cannot be blank") @Size(max = 2) @RequestBody List<String> hours){
-        utils.setWorkingHoursInterval(hours);
     }
 }

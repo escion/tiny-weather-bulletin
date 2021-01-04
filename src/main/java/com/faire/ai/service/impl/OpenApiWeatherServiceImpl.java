@@ -32,10 +32,10 @@ public class OpenApiWeatherServiceImpl implements WeatherService {
     }
 
     @Override
-    public Bulletin getForecast(String city, Optional<String> country) throws ForecastNotAvailableException{
+    public Bulletin getForecast(String city, String country) throws ForecastNotAvailableException{
         try{
-            if(country.isPresent()){
-                city = StringUtils.joinWith(",", city, country.get());
+            if(StringUtils.isNotBlank(country)){
+                city = StringUtils.joinWith(",", city, country);
             }
             ResponseEntity<OpenApiBulletin> response = restTemplate.getForEntity(baseUrl, OpenApiBulletin.class, city);
             if(response.getStatusCode().is2xxSuccessful()){

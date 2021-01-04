@@ -39,7 +39,7 @@ public class OpenApiWeatherServiceImplTest {
         ReflectionTestUtils.setField(service, "baseUrl", "fake/path");
         when(restTemplate.getForEntity(anyString(), eq(OpenApiBulletin.class), any(Object.class))).thenReturn(ResponseEntity.ok().body(new OpenApiBulletin()));
         when(utils.mapOpenApiToBulletin(any(OpenApiBulletin.class))).thenReturn(new Bulletin());
-        Bulletin bulletin = service.getForecast("Milan", Optional.empty());
+        Bulletin bulletin = service.getForecast("Milan", null);
         Assertions.assertNotNull(bulletin);
     }
 
@@ -47,20 +47,20 @@ public class OpenApiWeatherServiceImplTest {
     public void testCallService401(){
         ReflectionTestUtils.setField(service, "baseUrl", "fake/path");
         when(restTemplate.getForEntity(anyString(), eq(OpenApiBulletin.class), any(Object.class))).thenThrow(new RestClientResponseException("Appid not valid",401,"Appid not valid",null,null,null));
-        Assertions.assertThrows(ForecastNotAvailableException.class, () -> service.getForecast("Milan", Optional.empty()));
+        Assertions.assertThrows(ForecastNotAvailableException.class, () -> service.getForecast("Milan", null));
     }
 
     @Test
     public void testCallService500(){
         ReflectionTestUtils.setField(service, "baseUrl", "fake/path");
         when(restTemplate.getForEntity(anyString(), eq(OpenApiBulletin.class), any(Object.class))).thenThrow(RuntimeException.class);
-        Assertions.assertThrows(ForecastNotAvailableException.class, () -> service.getForecast("Milan", Optional.empty()));
+        Assertions.assertThrows(ForecastNotAvailableException.class, () -> service.getForecast("Milan", null));
     }
 
     @Test
     public void testCallService404(){
         ReflectionTestUtils.setField(service, "baseUrl", "fake/path");
         when(restTemplate.getForEntity(anyString(), eq(OpenApiBulletin.class), any(Object.class))).thenReturn(ResponseEntity.status(HttpStatus.NOT_FOUND).body(new OpenApiBulletin()));
-        Assertions.assertThrows(ForecastNotAvailableException.class, () -> service.getForecast("Milan", Optional.empty()));
+        Assertions.assertThrows(ForecastNotAvailableException.class, () -> service.getForecast("Milan", null));
     }
 }
