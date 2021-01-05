@@ -35,7 +35,7 @@ public class SwaggerConfig {
                 "Tiny Weather Bulletin documentation",
                 "REST APIs for getting next three days forecasts by specific location",
                 "","",
-                new Contact("Bramati Alessandro", "", "bramati.alessandro@gmail.com"),
+                new Contact("Bramati Alessandro", "", ""),
                 "License of API", "API license URL", Collections.emptyList());
     }
 }
