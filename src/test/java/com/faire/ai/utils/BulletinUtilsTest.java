@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 public class BulletinUtilsTest {
@@ -31,6 +32,7 @@ public class BulletinUtilsTest {
         openApiBulletin = mapper.readValue(new String(Files.readAllBytes(Paths.get("src/test/resources/openapi_mock.json"))), OpenApiBulletin.class);
         utils.setWorkingHoursInterval(Arrays.asList("09:00", "18:00"));
         bulletin = utils.mapOpenApiToBulletin(openApiBulletin);
+        bulletin.setCurrentTime(LocalDateTime.of(2021,1,4,12,0));
     }
 
     @Test

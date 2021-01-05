@@ -8,6 +8,7 @@ import com.faire.ai.utils.BulletinUtils;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,9 +59,21 @@ public class ForecastController {
 
     @PostMapping(value = "/next-three-days")
     @ApiOperation("Updates working hours (default 09:00 - 18:00, considered at city local time)")
-    public void modifyWorkingHours(
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, response = Bulletin.class, message = "OK"),
+            @ApiResponse(code = 500, response = Error.class, message = "Error setting working hours")
+    }
+    )
+    public ResponseEntity<Object> modifyWorkingHours(
             @ApiParam("Array containing range interval of working hours with HH:mm pattern. Cannot be blank") @RequestBody List<String> hours){
-        utils.setWorkingHoursInterval(hours);
+        try{
+            utils.setWorkingHoursInterval(hours);
+            return ResponseEntity.ok().body(null);
+        }
+        catch(Throwable e){
+            Error error = new Error(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
     }
 
     private ResponseEntity getForecast(String city, String country){
